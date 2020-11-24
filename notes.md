@@ -63,92 +63,39 @@ time and version might not be present at all in some documents and
 so can't be intrinsic for everything, so probably can only be links
 predicating of things. This motivates non-binary links (see below).
 
-# Document Types
+# Styling
 
-Some documents have different types. For instance, some documents should be seen as Markdown formatted text. Such a document would be represented by the raw text content as one document, and two complex documents: one is the one that is indicated to be Markdown, and another is a link that tags the document as Markdown. For example:
-
-```
-host/rawtext1:
-  # Title
-  This is markdown.
-
-  ## Subtitle
-  - foo
-    - bar
-    - baz
-
-host/markdowndoc1:
-  host/rawtext1
-  host/markdowntag1
-
-host/markdowntag1:
-  markdownspechost/markdownspec
-  markdown-document: host/markdowndoc1
-  source-elements: element/0
-```
-
-The markdown document transcludes the raw text, but also to the link that marks it as markdown and thus by this transclusion the link is canonically part of, and essential to, what the document is. The link itself indicates both which document is the markdown document, and which part of that document is the markdown source text.
-
-A more complex kind of compound document could be something like a textual document that has a canonical HTML mechanism for rendering it, which might look something like this:
+Styling would use what is sometimes called an overlay decision list (ODL), which in this setting consists of a separate document which transcludes links that mark which parts of the document are what sort of thing. For instance, the ODL analog of the HTML example above:
 
 ```
-host/rawtext2:
-  My Document
+host/doc:
+  host/rawtext
+  host/odllinkfordoc
 
-  This is some text. This is a paragraph.
-
-  This is also a paragraph.
-
-host/doc2:
-  host/rawtext2
-  host/htmlformattingfordoc2
-
-host/htmlformattingfordoc2:
-  htmlformattingspechost/htmlformattingspec
-  formattable-document: host/doc2
-  html-template: host/htmltemplatefordoc2
-
-host/htmltemplatefordoc2:
-  <html>
-    <head>
-      <title>{{ element/0/span/0-11 }}</title>
-    </head>
-    <body>
-      <p>{{ element/0/span/13-52 }}</p>
-      <p>{{ element/0/span/54-79 }}</p>
-    </body>
-  </html>
-```
-
-A document that has a more native kind of styling would use what is sometimes called an overlay decision list (ODL), which in this setting consists of a separate document which transcludes links that mark which parts of the document are what sort of thing. For instance, the ODL analog of the HTML example above:
-
-```
-host/doc3:
-  host/rawtext2
-  host/odllinkfordoc3
-
-host/odllinkfordoc3:
+host/odllinkfordoc:
   odlspechost/odlspec
-  formattable-document: host/doc3
-  odl-document: host/odlfordoc3
+  formattable-document: host/doc
+  odl-document: host/odlfordoc
 
-host/odlfordoc3:
-  host/odldoc3titlelink
-  host/odldoc3par1link
-  host/odldoc3par2link
+host/odlfordoc:
+  host/odldoctitlelink
+  host/odldocpar1link
+  host/odldocpar2link
 
-host/odldoc3titlelink:
+host/odldoctitlelink:
   odlspechost/odltitlespec
   title-text: element/0/span/0-11
 
-host/olddoc3par1link:
+host/olddocpar1link:
   odlspechost/odlparagraphspec
   paragraph-text: element/0/span/13-52
 
-host/olddoc3par2link:
+host/olddocpar2link:
   odlspechost/odlparagraphspec
   paragraph-text: element/0/span/54-79
 ```
+
+# Trails and Assemblages
 
 Other imaginable uses for compound documents are as records of browsing, to replicate Memex's trails, for instance. Such a thing might look something like this:
 
@@ -163,6 +110,21 @@ host/memextraillink:
   memextrailspechost/memextrailspec
   trail: host/memextrail
   link-sequence: host/linkdoc1todoc2, host/linkdoc2todoc3
+```
+
+Since trails have a distinctive linearity to them, it's also probably desirable to have a more free-form scattering of documents that are related in ways that the author wishes to share. The structure of one of these assemblages would be very simlar to a trail but the expected structure of the links, and the presentation, are not sequential:
+
+```
+host/assemblage:
+  host/doc1
+  host/doc2
+  host/doc3
+  host/assembladelink
+
+host/assemblagelink:
+  assemblagelinkspechost/assemblagelinkspec
+  assemblage: host/assemblage
+  links: host/linkdoc1todoc2, host/linkdoc1todoc3, host/linkdoc2todoc3
 ```
 
 # Syntax / Formatting
