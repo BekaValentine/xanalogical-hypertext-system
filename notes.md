@@ -69,63 +69,55 @@ Styling would use what is sometimes called an overlay decision list (ODL), which
 
 ```
 host/doc:
+  compound
   host/rawtext
   host/odllinkfordoc
 
 host/odllinkfordoc:
+  link
   odlspechost/odlspec
   formattable-document: host/doc
-  odl-document: host/odlfordoc
-
-host/odlfordoc:
-  host/odldoctitlelink
-  host/odldocpar1link
-  host/odldocpar2link
+  odl: host/odldoctitlelink, host/odldocpar1link host/odldocpar2link
 
 host/odldoctitlelink:
+  link
   odlspechost/odltitlespec
   title-text: element/0/span/0-11
 
 host/olddocpar1link:
+  link
   odlspechost/odlparagraphspec
   paragraph-text: element/0/span/13-52
 
 host/olddocpar2link:
+  link
   odlspechost/odlparagraphspec
   paragraph-text: element/0/span/54-79
 ```
 
 # Trails and Assemblages
 
-Other imaginable uses for compound documents are as records of browsing, to replicate Memex's trails, for instance. Such a thing might look something like this:
+Other imaginable uses for links are as records of browsing, to replicate Memex's trails, for instance. Such a thing might look something like this:
 
 ```
 host/memextrail:
-  host/doc1
-  host/doc2
-  host/doc3
-  host/memextraillink
-
-host/memextraillink:
-  memextrailspechost/memextrailspec
-  trail: host/memextrail
-  link-sequence: host/linkdoc1todoc2, host/linkdoc2todoc3
+  link
+  memextraillinkspechost/memextraillinkspec
+  trail: host/doc1, host/linkdoc1todoc2, host/doc2, host/linkdoc2todoc3, host/doc3
 ```
 
-Since trails have a distinctive linearity to them, it's also probably desirable to have a more free-form scattering of documents that are related in ways that the author wishes to share. The structure of one of these assemblages would be very simlar to a trail but the expected structure of the links, and the presentation, are not sequential:
+Since trails have a distinctive linearity to them, it's also probably desirable to have a more free-form scattering of documents that are related in ways that the author wishes to share. The structure of one of these assemblages would be very similar to a trail but the expected structure of the links, and the presentation, are not sequential:
 
 ```
 host/assemblage:
-  host/doc1
-  host/doc2
-  host/doc3
-  host/assembladelink
-
-host/assemblagelink:
+  link
   assemblagelinkspechost/assemblagelinkspec
-  assemblage: host/assemblage
-  links: host/linkdoc1todoc2, host/linkdoc1todoc3, host/linkdoc2todoc3
+  assemblage: host/doc1, host/doc2, host/doc3, host/linkdoc1todoc2, host/linkdoc1todoc3, host/linkdoc2todoc3
 ```
+
+# Distinctions Between Compound Documents and Links
+
+The difference between compound documents and links is perhaps subtle, but important. Compound documents are fundamentally not structured in any interesting way beyond sequence of content. That is, essentially, what they're for: combining multiple pieces of content, of possibly different types, into a single sequential document. Compound documents are not intended for especially rich content, and definitely not for content with interesting structure beyond sequential combination and aggregation of sub-content. Compound documents dont have types, or any sort of information about "what" they are or do, because they do precisely one thing: sum up the content of their transclusions. Links, on the other hand, are for all structured concepts that relate things, whether those things are content documents (simple or complex), or other links. Links are the structured, open-ended, type-distinguished form of document. Some kinds of links are merely relational, for example, jump links, quote links, and comment links. But other links are much more richly structured, and represent a kind of document in their own right, such as trail links.
 
 # Syntax / Formatting
 
@@ -136,12 +128,13 @@ The system should have many kinds of simple documents, ranging from text to vide
 Compound content is represented by a list of newline-separated addresses.
 
 ```
-<compound-document> ::= <address>*{<newline>}
+<compound-document> ::= "compound" <newline> <address>+{<newline>}
 ```
 
 An example of a content document would be this:
 
 ```
+compound
 51.23.56.11:5000/1786vrf5asd4f7/
 51.23.56.11:5000/sdf8732jkvdb0983q/time/4m30s-5m30s
 ```
@@ -151,7 +144,7 @@ An example of a content document would be this:
 Links are represented by the following grammar:
 
 ```
-<link-document> ::= <link-type> <newline> <endset-line>+{<newline>}
+<link-document> ::= "link" <newline> <link-type> <newline> <endset-line>+{<newline>}
 <link-type> ::= <non-whitespace-ascii-character>+
 <endset-line> ::= <endset-tag> <colon> (<whitespace> <address>)+{<comma>}
 <endset-tag> ::= <non-whitespace-ascii-character>+
@@ -160,7 +153,130 @@ Links are represented by the following grammar:
 An example of a link document would be this:
 
 ```
+link
 51.23.56.11:5000/c98vb32kjdf
 foo: 51.23.56.11:5000/239nbsac83/part/0
 bar: 51.23.56.11:5000/239nbsac83/part/1, 51.23.56.11:5000/239nbsac83/part/2
 ```
+
+# Primitive Document Types
+
+There are 5 primitive document types supported by the system:
+
+- Text
+- Images
+- Audio
+- Video
+- Web Pages
+
+More may be added later as necessary. From these, we build compound documents, which are a 6th kind of document but not a primitive type.
+
+# Addressing Spans
+
+Spans within a document can be referenced by span addresses in various ways, depending on the kind of document.
+
+## Text Spans
+
+Text spans are addressed exclusively by character spans. Indexes start at 0 and go up to and include the length of the text. Their syntax is
+
+```
+<text-span> ::= <natural> "-" <natural>
+```
+
+An example of a text span is `3-42`.
+
+## Image Spans
+
+Image spans are rectangles, i.e. pairs of points. The first pair is the bottom left corner of the rectangle, and the second is the top right of the rectangle. The rectangle must of course fit within the image.
+
+```
+<image-span> ::= <natural> "," <natural> "-" <natural> "," <natural>
+```
+
+An example of an image span is `25,25-50,50`.
+
+## Audio Spans
+
+Audio spans are pairs of times in seconds. The first time is the start time, the second is the end time. Times are measured in positive decimals, and they reference the nearest timepoint in the actual audio.
+
+```
+<audio-span> ::= <decimal> "-" <decimal>
+```
+
+An example of an audio span is `3.44-51.097`.
+
+## Video Spans
+
+Video spans are pairs of frame numbers, representing the start and end frame.
+
+```
+<video-span> ::= <natural> "-" <natural>
+```
+
+An example of a video span is `92-1770`.
+
+## Web Page Spans
+
+Web pages do not have spans currently, and can only be referenced in whole by their URL. If the URL has an anchor in it, then that is included as the address of the page, but it is not really addressable otherwise.
+
+## Compound Document Spans
+
+Compound documents have spans similar to text spans, but with non-textual elements treated as occupying a single index. So for instance a compound document that has only text is addressed normally like text (independent of the underlying, transcluded document's indexes). If there is an image, the image is treated like a single character. Consider the following compound document, and its source text:
+
+```
+host/text0:
+  This is some text.
+
+host/text1:
+  This is also some text.
+
+host/image
+
+host/compound:
+  compound
+  host/text0
+  host/image
+  host/text1
+```
+
+The span `0-4` in `host/compound` spans the text "This", just as it does in `host/text0`. Up to position `18`, the spans cover the same characters. However, span `18-19` covers the image, in its entirety. `19-42` covers the same characters in `host/compound` as are in span `0-23` in `host/text1`.
+
+## Link Spans
+
+Links do not have spans into them, they are seen externally as atomic wholes.
+
+# Versioning
+
+Unlike some of the Xanadu systems, this system is immutable and append-only. Documents cannot be edited in place, and versions are distinct documents that are noted as versions via versioning links. This lets us do a number of useful things, one of which is have branching histories -- future versions that are derived from more than one past version.
+
+# Request Processing
+
+A retrieval request for a compound document should retrieve all of the transcluded document spans and links recursively down to the primitive components. The returned result should consist of the text and data content of the final document, for each of the transcluded subdocuments.
+
+In practice, we can implement this in two ways, by actually live-composing the documents for each request, or by composing them at creation and storing the pre-composed results as a cache. There are trade-offs: live composition takes CPU time, while caching of pre-composed documents takes storage. Given the vast quantities of storage that are currently available at ridiculously low prices, it makes sense to pre-compose documents. However, it will take experimentation to determine what is the right solution. Probably the ultimate right solution is to track access statistics and cache the high-frequency content but let the low-frequency content be composed on the fly.
+
+Regardless of caching, for compound documents we will return a list of raw text components, and addresses of non-textual documents. The non-textual documents should be fetched by the front end separately from the compound document itself, and then presented intermixed with the compound documents text content.
+
+# What's Stored With Documents
+
+Documents are stored with some metadata, namely the datetime of their creation. This is used primarily for sorting the scroll to display items by time.
+
+# Server API
+
+The server has two main functionalities -- to serve data when its requested, and to store new data when its provided. The web API for this is as follows:
+
+## GET `/api/scroll/<docid>`
+
+Retrieve the document with id `<docid>`. Header content type should be text for raw text, links, and
+
+## GET `/api/scroll/<docid>/<span>`
+
+Retrieve the span `<span>` in the document `<docid>`.
+
+## GET `/api/scroll/new_id/<count>`
+
+Generate `<count>` many random unique document ids.
+
+## POST `/api/scroll/<docid>`
+
+Store new documents. The returned value is the new document id. Validation of the data is performed to ensure that its a valid document. Validation of the id is performed to check that it hasn't yet been stored. If the documents are invalid or the id has already had a document stored at it, a 400 error is returned.
