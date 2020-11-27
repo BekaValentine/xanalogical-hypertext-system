@@ -125,38 +125,53 @@ The system should have many kinds of simple documents, ranging from text to vide
 
 ## Compound Content Syntax
 
-Compound content is represented by a list of newline-separated addresses.
+Compound content is represented by the following JSON type:
 
 ```
-<compound-document> ::= "compound" <newline> <address>+{<newline>}
+{
+  "type": "compound",
+  "id": DocID,
+  "transclusions": [Address]
+}
 ```
 
 An example of a content document would be this:
 
 ```
-compound
-51.23.56.11:5000/1786vrf5asd4f7/
-51.23.56.11:5000/sdf8732jkvdb0983q/time/4m30s-5m30s
+{
+  "type": "compound",
+  "id": "4587xv87234asd",
+  "transclusions": ["51.23.56.11:5000/1786vrf5asd4f7/", "51.23.56.11:5000/sdf8732jkvdb0983q/time/4m30s-5m30s"]
+}
 ```
 
 ## Link Syntax
 
-Links are represented by the following grammar:
+Links are represented by the following JSON type:
 
 ```
-<link-document> ::= "link" <newline> <link-type> <newline> <endset-line>+{<newline>}
-<link-type> ::= <non-whitespace-ascii-character>+
-<endset-line> ::= <endset-tag> <colon> (<whitespace> <address>)+{<comma>}
-<endset-tag> ::= <non-whitespace-ascii-character>+
+{
+  "type": "link",
+  "id": DocID,
+  "link_type": String,
+  "endsets": {
+    FieldName: [Address]
+  }
+}
 ```
 
 An example of a link document would be this:
 
 ```
-link
-51.23.56.11:5000/c98vb32kjdf
-foo: 51.23.56.11:5000/239nbsac83/part/0
-bar: 51.23.56.11:5000/239nbsac83/part/1, 51.23.56.11:5000/239nbsac83/part/2
+{
+  "type": "link",
+  "id": "z789v6asdf23vds",
+  "link_type": "51.23.56.11:5000/c98vb32kjdf",
+  "endsets": {
+    "foo": ["51.23.56.11:5000/239nbsac83/part/0"],
+    "bar": ["51.23.56.11:5000/239nbsac83/part/1", "51.23.56.11:5000/239nbsac83/part/2"]
+  }
+}
 ```
 
 # Primitive Document Types
@@ -170,6 +185,16 @@ There are 5 primitive document types supported by the system:
 - Web Pages
 
 More may be added later as necessary. From these, we build compound documents, which are a 6th kind of document but not a primitive type.
+
+Raw text documents have the following JSON type:
+
+```
+{
+  "type": "text",
+  "id": DocID,
+  "text": String
+}
+```
 
 # Addressing Spans
 
