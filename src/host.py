@@ -13,9 +13,6 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.config['UPLOAD_DIRECTORY'] = 'data/media/'
 app.config['ALLOWED_UPLOAD_EXTENSIONS'] = extensions = {
-    # text files
-    'txt',
-
     # image files
     'svg', 'png', 'jpg', 'jpeg', 'gif', 'tif', 'tiff', 'bmp',
 
@@ -23,46 +20,64 @@ app.config['ALLOWED_UPLOAD_EXTENSIONS'] = extensions = {
     'mp3', 'wav', 'midi', 'ogg', 'oga', 'mogg', 'flac', 'aac', 'aiff', 'au', 'm4a', 'm4b',
 
     # video files
-    'avi', 'mpg', 'mpeg', 'mp4', 'mov', 'webm', 'mkv', 'wmv',
+    'avi',
+    # mpg not supported by chrome
+    # 'mpg',
+    # 'mpeg',
+    'mp4', 'mov', 'webm', 'mkv', 'wmv',
 }
 ip_address = '127.0.0.1:' + os.environ['FLASK_RUN_PORT']
 
-database = TinyDB('data/scroll.json')
+database = TinyDB('data/timeline.json')
 
 
 @app.route('/', methods=['GET'])
 def root_get():
-    return repr(len(database.all()))
+    return render_template('index.html')
 
 
-@app.route('/api/scroll/<doc_id>', methods=['GET'])
-def api_scroll_doc_id_get(doc_id):
-    results = database.search(Query().id == doc_id)
-    if len(results) != 1:
-        return 'not found\n', 404
+@app.route('/api/timeline', methods=['GET'])
+def api_timeline_get():
+    db_records = sorted(database.all(), reverse=True,
+                        key=lambda r: r['datetime'])
+    for i in range(0, len(db_records)):
+        if db_records[i]['type'] == 'compound':
+            resolved = document_types.resolve_compound_document(
+                database, document_types.parse_db_record(db_records[i]))
+            db_records[i] = resolved
+    return json.dumps(db_records), 200
 
-    document = document_types.parse_db_record(results[0])
 
-    if isinstance(document, document_types.Text) or\
-       isinstance(document, document_types.Link) or\
-       isinstance(document, document_types.WebPage):
-        return json.dumps(document.to_dict())
-
-    elif isinstance(document, document_types.Media):
-        return send_from_directory(app.config['UPLOAD_DIRECTORY'], document.filename)
-
-    elif isinstance(document, document_types.Compound):
-        resolved = document_types.resolve_compound_document(database, document)
-        return resolved, 200
-
+@app.route('/api/timeline/<doc_id>', methods=['GET'])
+def api_timeline_doc_id_get(doc_id):
+    if '.' in doc_id:
+        return send_from_directory(app.config['UPLOAD_DIRECTORY'], doc_id)
     else:
-        return 'invalid document', 500
+        results = database.search(Query().id == doc_id)
+        if len(results) != 1:
+            return 'not found\n', 404
 
-    return 'ok\n', 200
+        document = document_types.parse_db_record(results[0])
+
+        if isinstance(document, document_types.Text) or\
+           isinstance(document, document_types.Link) or\
+           isinstance(document, document_types.WebPage):
+            return json.dumps(document.to_dict()), 200
+
+        elif isinstance(document, document_types.Media):
+            return send_from_directory(app.config['UPLOAD_DIRECTORY'], document.filename)
+
+        elif isinstance(document, document_types.Compound):
+            resolved = document_types.resolve_compound_document(
+                database, document)
+            return resolved, 200
+
+        else:
+            return 'invalid document', 500
 
 
-@app.route('/api/scroll/<doc_id>', methods=['POST'])
-def api_scroll_doc_id_post(doc_id):
+@app.route('/api/timeline/<doc_id>', methods=['POST'])
+def api_timeline_doc_id_post(doc_id):
     if not re.match('^[0-9a-f]+$', doc_id):
         return 'invalid document id\n', 400
 
@@ -103,8 +118,8 @@ def allowed_file_extensions(extension):
     return extension in app.config['ALLOWED_UPLOAD_EXTENSIONS']
 
 
-@app.route('/api/scroll/new_id', methods=['GET'])
-def api_scroll_new_id_get():
+@app.route('/api/timeline/new_id', methods=['GET'])
+def api_timeline_new_id_get():
     while True:
         id = str(uuid.uuid4()).replace('-', '')
         if 0 == len(database.search(Query().document_id == id)):

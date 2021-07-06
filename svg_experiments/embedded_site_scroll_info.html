@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>svg view rect scaling</title>
+  </head>
+  <body>
+    <svg width="960" height="850">
+      <g transform="translate(300, 50) scale(0.5)">
+        <foreignObject x="10" y="10" width="800" height="800">
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <iframe onload="main()" id="embedded_site" src="http://starkravingfinkle.org/blog" style="width:700px;height:700px"></iframe>
+          </body>
+        </foreignObject>
+      </g>
+    </svg>
+  </body>
+  <script>
+    function main() {
+      var iframe = document.getElementById('embedded_site');
+      var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+      console.log(innerDoc);
+    }
+  </script>
+</html>

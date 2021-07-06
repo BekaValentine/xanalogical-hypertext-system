@@ -195,7 +195,8 @@ def resolve_compound_document(db, doc):
         elif isinstance(tx, Media):
             resolved_transclusions.append({
                 'type': 'media',
-                'id': tx.id
+                'id': tx.id,
+                'filename': tx.filename
             })
             end = resolved_length + 1
 
@@ -210,7 +211,6 @@ def resolve_compound_document(db, doc):
         elif isinstance(tx, Compound):
             rec = resolve_compound_document(db, tx)
             resolved_transclusions += rec['resolved_transclusions']
-            resolved_links += rec['resolved_links']
             end = resolved_length + rec['resolved_length']
 
         if tx.id not in transclusion_spans:
